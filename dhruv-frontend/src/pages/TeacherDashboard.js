@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { getAssignmentSubmissions, autoGradeAssignment } from '../services/api';
-import { MdCheckCircle, MdPendingActions, MdGrade } from 'react-icons/md';
+import { getTeacherAssignments } from '../services/api';
+import { MdCheckCircle, MdPendingActions, MdGrade, MdEdit, MdDelete } from 'react-icons/md';
 
 function TeacherDashboard() {
   const { user } = useAuth();
@@ -11,9 +11,24 @@ function TeacherDashboard() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Fetch teacher's assignments
-    // This would be implemented with actual API call
-    setLoading(false);
+    const fetchAssignments = async () => {
+      try {
+        if (user?.id) {
+          const response = await getTeacherAssignments(user.id);
+          // Handle both array and nested object responses
+          const data = response.data;
+          const assignmentList = Array.isArray(data) ? data : (data?.assignments || []);
+          setAssignments(assignmentList);
+        }
+      } catch (error) {
+        console.error('Error fetching assignments:', error);
+        setAssignments([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAssignments();
   }, [user?.id]);
 
   if (loading) {
@@ -34,7 +49,7 @@ function TeacherDashboard() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-gray-600 text-sm">Total Assignments</p>
-              <p className="text-3xl font-bold text-blue-600">0</p>
+              <p className="text-3xl font-bold text-blue-600">{assignments.length}</p>
             </div>
             <MdGrade size={32} className="text-blue-600" />
           </div>
@@ -65,15 +80,63 @@ function TeacherDashboard() {
       <div className="bg-white rounded-lg shadow p-6">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-bold text-gray-800">Assignments</h2>
-          <button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded">
+          <button
+            onClick={() => navigate('/teacher/create')}
+            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded"
+          >
             + Create Assignment
           </button>
         </div>
 
-        <div className="text-center py-12">
-          <p className="text-gray-600 text-lg">No assignments yet</p>
-          <p className="text-gray-500">Create your first assignment to get started</p>
-        </div>
+        {assignments.length === 0 ? (
+          <div className="text-center py-12">
+            <p className="text-gray-600 text-lg">No assignments yet</p>
+            <p className="text-gray-500">Create your first assignment to get started</p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse">
+              <thead>
+                <tr className="bg-gray-100">
+                  <th className="border border-gray-300 px-4 py-2 text-left text-gray-700 font-bold">Title</th>
+                  <th className="border border-gray-300 px-4 py-2 text-left text-gray-700 font-bold">Course</th>
+                  <th className="border border-gray-300 px-4 py-2 text-left text-gray-700 font-bold">Due Date</th>
+                  <th className="border border-gray-300 px-4 py-2 text-left text-gray-700 font-bold">Max Score</th>
+                  <th className="border border-gray-300 px-4 py-2 text-left text-gray-700 font-bold">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {assignments.map((assignment) => (
+                  <tr key={assignment._id} className="hover:bg-gray-50">
+                    <td className="border border-gray-300 px-4 py-3 text-gray-800">{assignment.title}</td>
+                    <td className="border border-gray-300 px-4 py-3 text-gray-600">{assignment.courseCode}</td>
+                    <td className="border border-gray-300 px-4 py-3 text-gray-600">
+                      {new Date(assignment.dueDate).toLocaleDateString()}
+                    </td>
+                    <td className="border border-gray-300 px-4 py-3 text-gray-600">{assignment.maxScore}</td>
+                    <td className="border border-gray-300 px-4 py-3">
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => navigate(`/assignment/${assignment._id}`)}
+                          className="text-blue-600 hover:text-blue-800"
+                          title="View"
+                        >
+                          <MdEdit size={20} />
+                        </button>
+                        <button
+                          className="text-red-600 hover:text-red-800"
+                          title="Delete"
+                        >
+                          <MdDelete size={20} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   );

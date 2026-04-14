@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { useAuth } from './context/AuthContext';
@@ -14,6 +14,7 @@ import GradeSubmission from './pages/GradeSubmission';
 import ViewGrades from './pages/ViewGrades';
 import ViewFeedback from './pages/ViewFeedback';
 import Analytics from './pages/Analytics';
+import CreateAssignment from './pages/CreateAssignment';
 import Navigation from './components/Navigation';
 
 // Protected Route Component
@@ -116,6 +117,15 @@ function AppContent() {
               <Analytics />
             </ProtectedRoute>
           } 
+        />
+
+        <Route
+          path="/teacher/create"
+          element={
+            <ProtectedRoute requiredRole={['teacher', 'admin']}>
+              <CreateAssignment />
+            </ProtectedRoute>
+          }
         />
 
         {/* Default Routes */}
