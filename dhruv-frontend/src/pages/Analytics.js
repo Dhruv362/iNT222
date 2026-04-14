@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { getDashboardAnalytics } from '../services/api';
-import { MdBarChart, MdTrendingUp, MdStudents } from 'react-icons/md';
+import { MdBarChart, MdTrendingUp, MdPeople } from 'react-icons/md';
 
 function Analytics() {
   const [analytics, setAnalytics] = useState(null);
@@ -47,7 +47,7 @@ function Analytics() {
                   <p className="text-gray-600 text-sm">Total Submissions</p>
                   <p className="text-3xl font-bold text-green-600">{analytics.summary?.totalSubmissions || 0}</p>
                 </div>
-                <MdStudents size={32} className="text-green-600" />
+                <MdPeople size={32} className="text-green-600" />
               </div>
             </div>
 
