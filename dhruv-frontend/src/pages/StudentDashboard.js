@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { getStudentSubmissions, getStudentGrades } from '../services/api';
+import { getAllAssignments, getStudentSubmissions, getStudentGrades } from '../services/api';
 import { MdAssignment, MdDone, MdAccessTime, MdGrade } from 'react-icons/md';
 
 function StudentDashboard() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [assignments, setAssignments] = useState([]);
   const [submissions, setSubmissions] = useState([]);
   const [grades, setGrades] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -14,15 +15,27 @@ function StudentDashboard() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [submissionsRes, gradesRes] = await Promise.all([
+        const [allAssignmentsRes, submissionsRes, gradesRes] = await Promise.all([
+          getAllAssignments(),
           getStudentSubmissions(user.id),
           getStudentGrades(user.id)
         ]);
 
-        setSubmissions(submissionsRes.data.submissions || []);
-        setGrades(gradesRes.data.grades || []);
+        // Handle different response formats
+        let assignmentList = allAssignmentsRes.data;
+        if (!Array.isArray(assignmentList)) {
+          assignmentList = assignmentList?.assignments || [];
+        }
+        setAssignments(assignmentList);
+
+        const submissionsList = submissionsRes.data.submissions || submissionsRes.data || [];
+        const gradesList = gradesRes.data.grades || gradesRes.data || [];
+
+        setSubmissions(submissionsList);
+        setGrades(gradesList);
       } catch (error) {
         console.error('Error fetching data:', error);
+        setAssignments([]);
       } finally {
         setLoading(false);
       }
@@ -92,6 +105,37 @@ function StudentDashboard() {
             <MdAccessTime size={32} className="text-purple-600" />
           </div>
         </div>
+      </div>
+
+      {/* Upcoming Assignments */}
+      <div className="bg-white rounded-lg shadow p-6 mb-6">
+        <h2 className="text-2xl font-bold text-gray-800 mb-4">Upcoming Assignments</h2>
+        
+        {assignments.length === 0 ? (
+          <p className="text-gray-600">No assignments available</p>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {assignments.map((assignment) => (
+              <div key={assignment._id} className="border border-gray-200 rounded-lg p-4 hover:shadow-lg transition">
+                <h3 className="font-bold text-lg text-gray-800 mb-2">{assignment.title}</h3>
+                <p className="text-gray-600 text-sm mb-2">{assignment.courseCode}</p>
+                <p className="text-gray-600 text-sm mb-3">{assignment.description?.substring(0, 100)}...</p>
+                
+                <div className="flex justify-between items-center">
+                  <p className="text-sm text-gray-600">
+                    Due: {new Date(assignment.dueDate).toLocaleDateString()}
+                  </p>
+                  <button
+                    onClick={() => navigate(`/submit/${assignment._id}`)}
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm"
+                  >
+                    Submit
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Recent Submissions */}

@@ -68,6 +68,30 @@ router.post('/', auth, checkRole(['teacher', 'admin']), async (req, res) => {
 });
 
 /**
+ * GET /api/assignments
+ * Get all assignments
+ */
+router.get('/', auth, async (req, res) => {
+  try {
+    const assignments = await Assignment.find()
+      .populate('teacher', 'firstName lastName')
+      .sort({ dueDate: -1 });
+
+    res.status(200).json({
+      success: true,
+      count: assignments.length,
+      assignments
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching assignments'
+    });
+  }
+});
+
+/**
  * GET /api/assignments/:id
  * Get assignment details
  */

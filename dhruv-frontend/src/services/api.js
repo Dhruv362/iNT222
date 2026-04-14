@@ -38,6 +38,10 @@ export const updateUserProfile = (userId, data) => {
 };
 
 // ============ Assignment APIs ============
+export const getAllAssignments = () => {
+  return apiClient.get('/assignments');
+};
+
 export const getAssignments = (courseCode) => {
   return apiClient.get(`/assignments/course/${courseCode}`);
 };
