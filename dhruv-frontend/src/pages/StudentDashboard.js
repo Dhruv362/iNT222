@@ -15,11 +15,16 @@ function StudentDashboard() {
   useEffect(() => {
     const fetchData = async () => {
       try {
+        console.log('Fetching data for user ID:', user.id);
         const [allAssignmentsRes, submissionsRes, gradesRes] = await Promise.all([
           getAllAssignments(),
           getStudentSubmissions(user.id),
           getStudentGrades(user.id)
         ]);
+
+        console.log('All Assignments Response:', allAssignmentsRes.data);
+        console.log('Submissions Response:', submissionsRes.data);
+        console.log('Grades Response:', gradesRes.data);
 
         // Handle different response formats
         let assignmentList = allAssignmentsRes.data;
@@ -30,6 +35,9 @@ function StudentDashboard() {
 
         const submissionsList = submissionsRes.data.submissions || submissionsRes.data || [];
         const gradesList = gradesRes.data.grades || gradesRes.data || [];
+
+        console.log('Processed submissions list:', submissionsList);
+        console.log('Processed grades list:', gradesList);
 
         setSubmissions(submissionsList);
         setGrades(gradesList);

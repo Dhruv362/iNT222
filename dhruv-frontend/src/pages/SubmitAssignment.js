@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { submitAssignment } from '../services/api';
 
 function SubmitAssignment() {
   const { assignmentId } = useParams();
@@ -9,6 +10,7 @@ function SubmitAssignment() {
     files: []
   });
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
   const handleFileChange = (e) => {
     setFormData(prev => ({
@@ -20,13 +22,30 @@ function SubmitAssignment() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+    setError('');
     
     try {
-      // API call would go here
-      alert('Assignment submitted successfully!');
-      navigate('/student');
+      // Create FormData for multipart upload
+      const formDataToSend = new FormData();
+      formDataToSend.append('assignmentId', assignmentId);
+      formDataToSend.append('content', formData.content);
+      
+      // Append files
+      formData.files.forEach(file => {
+        formDataToSend.append('files', file);
+      });
+
+      const response = await submitAssignment(formDataToSend);
+      
+      if (response.data.success) {
+        alert('Assignment submitted successfully!');
+        navigate('/student');
+      } else {
+        setError(response.data.message || 'Error submitting assignment');
+      }
     } catch (error) {
-      alert('Error submitting assignment');
+      console.error('Submission error:', error);
+      setError(error.response?.data?.message || 'Error submitting assignment');
     } finally {
       setLoading(false);
     }
@@ -36,6 +55,12 @@ function SubmitAssignment() {
     <div className="container mx-auto p-6 max-w-2xl">
       <div className="bg-white rounded-lg shadow p-6">
         <h1 className="text-3xl font-bold text-gray-800 mb-6">Submit Assignment</h1>
+
+        {error && (
+          <div className="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
+            {error}
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>

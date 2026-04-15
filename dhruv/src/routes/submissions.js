@@ -17,6 +17,8 @@ router.post('/', auth, upload.array('files', 5), async (req, res) => {
     const { assignmentId, content } = req.body;
     const studentId = req.user.id;
 
+    console.log('Creating submission for student:', studentId, 'assignment:', assignmentId);
+
     // Validate input
     if (!assignmentId) {
       return res.status(400).json({
@@ -42,6 +44,7 @@ router.post('/', auth, upload.array('files', 5), async (req, res) => {
 
     if (submission) {
       // Update submission instead of creating new one
+      console.log('Updating existing submission:', submission._id);
       submission.content = content || submission.content;
       submission.submittedDate = new Date();
       submission.status = 'submitted';
@@ -58,6 +61,7 @@ router.post('/', auth, upload.array('files', 5), async (req, res) => {
       }
     } else {
       // Create new submission
+      console.log('Creating new submission for assignment', assignmentId);
       submission = new Submission({
         assignment: assignmentId,
         student: studentId,
@@ -76,6 +80,7 @@ router.post('/', auth, upload.array('files', 5), async (req, res) => {
     }
 
     await submission.save();
+    console.log('Submission saved successfully:', submission._id);
 
     // Update assignment submission count
     if (!submission.isLate) {
@@ -165,8 +170,13 @@ router.get('/assignment/:assignmentId', auth, checkRole(['teacher', 'admin']), a
  */
 router.get('/student/:studentId', auth, async (req, res) => {
   try {
+    console.log('Fetching submissions for student:', req.params.studentId);
+    console.log('Request user ID:', req.user.id, 'Type:', typeof req.user.id);
+    console.log('Request user role:', req.user.role);
+
     // Check authorization - student can only see their own submissions
-    if (req.user.role === 'student' && req.user.id !== req.params.studentId) {
+    if (req.user.role === 'student' && req.user.id.toString() !== req.params.studentId) {
+      console.log('Authorization denied:', req.user.id.toString(), 'vs', req.params.studentId);
       return res.status(403).json({
         success: false,
         message: 'Access denied'
@@ -177,6 +187,8 @@ router.get('/student/:studentId', auth, async (req, res) => {
       .populate('assignment', 'title courseCode')
       .populate('grade')
       .sort({ submittedDate: -1 });
+
+    console.log('Found', submissions.length, 'submissions for student', req.params.studentId);
 
     res.status(200).json({
       success: true,
